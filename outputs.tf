@@ -9,6 +9,6 @@ output "kubernetes_cluster_host" {
 }
 
 output "kubernetes_cluster_region" {
-  value       = "${var.gke_region}-a"
+  value       = var.gke_zone
   description = "GKE Cluster region"
 }

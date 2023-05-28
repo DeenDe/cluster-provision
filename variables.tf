@@ -16,3 +16,8 @@ variable "gke_region" {
   description = "region"
   default     = "us-central1"
 }
+
+variable "gke_zone" {
+  description = "region"
+  default     = "us-central1-a"
+}
