@@ -1,0 +1,40 @@
+- name: Execute kubectl commands using Ansible
+  hosts: localhost
+  gather_facts: false
+  collections:
+    - kubernetes.core
+
+  vars:
+    PIPELINE_VERSION: "1.8.5"
+
+  tasks:
+    - name: Get kubeconfig from GKE
+      ansible.builtin.shell: gcloud container clusters get-credentials $(terraform output -raw kubernetes_cluster_name) --region $(terraform output -raw kubernetes_cluster_region)
+
+    - name: Clone kubeflow/pipelines repository
+      ansible.builtin.git:
+        repo: "https://github.com/kubeflow/pipelines.git"
+        dest: "/tmp/kubeflow-pipelines"
+        version: "{{ PIPELINE_VERSION }}"
+
+    - name: Apply cluster-scoped-resources manifests
+      k8s:
+        definition: "{{ lookup('kubernetes.core.kustomize', dir='/tmp/kubeflow-pipelines/manifests/kustomize/cluster-scoped-resources/') }}"
+
+    - name: Wait for CRD established
+      ansible.builtin.shell: kubectl wait --for condition=established --timeout=60s crd/applications.app.k8s.io
+    
+    - name: Apply env/dev manifests
+      k8s:
+        definition: "{{ lookup('kubernetes.core.kustomize', dir='/tmp/kubeflow-pipelines/manifests/kustomize/env/dev/') }}"
+
+    - name: Wait for proxy pod initialization
+      ansible.builtin.shell: kubectl describe configmap inverse-proxy-config -n kubeflow | grep googleusercontent.com
+      register: output
+      until: output.stdout_lines | length > 0
+      retries: 60
+      delay: 15
+
+    - name: Print link to the proxy
+      debug:
+        var: output.stdout
