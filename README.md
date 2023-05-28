@@ -5,6 +5,7 @@
  * GCP account 
  * configured gcloud SDK (init and auth)
  * installed kubectl
+ * ansible [core 2.14.6] and collection kubernetes.core 2.4.0
 
 ## Configuration
 Provide project id, region, zone, number of nodes and machine type in `variables.tf` file.
@@ -19,7 +20,7 @@ Provision kubernetes cluster
 ```
 Install kubeflow
 
-```bash
-  ./kubeflow_init.sh
+```ansible
+  ansible-playbook playbook.yaml
 ```
     
